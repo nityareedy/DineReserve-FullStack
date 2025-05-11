@@ -7,6 +7,7 @@ import RestaurantDetailShimmer from "@/components/RestaurantDetailShimmer";
 import { ToastAction } from "@/components/ui/toast";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { useRouter } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
 
 interface Owner {
   id: number;
@@ -74,6 +75,26 @@ const RestaurantDetailPage = () => {
       return;
     }
 
+    let userId;
+    try {
+      const token = localStorage.getItem('user-token');
+      if (token) {
+        const decoded = jwtDecode<{ id: number }>(token);
+        userId = decoded.id;
+      }
+    } catch (e) {
+      console.error("Failed to decode JWT", e);
+    }
+
+    if (!userId) {
+      toast({
+        variant: "destructive",
+        title: "User not found",
+        description: "Could not determine the logged-in user.",
+      });
+      return;
+    }
+
     try {
       const response = await fetch("/api/reviews", {
         method: "POST",
@@ -83,7 +104,7 @@ const RestaurantDetailPage = () => {
         body: JSON.stringify({
           content: reviewContent,
           rating: reviewRating,
-          userId: 1,
+          userId,
           restaurantId: restaurant.id,
         }),
       });

@@ -10,6 +10,12 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
+    // Check if user exists before creating review
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return NextResponse.json({ error: 'User does not exist' }, { status: 400 });
+    }
+
     const newReview = await prisma.review.create({
         data: {
             content,
