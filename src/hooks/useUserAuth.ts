@@ -21,15 +21,20 @@ export const useUserAuth = (): AuthHookReturn => {
 
   useEffect(() => {
     const checkAuth = () => {
-      const token = localStorage.getItem(USER_TOKEN_KEY);
-      const expiration = localStorage.getItem(USER_TOKEN_EXPIRATION_KEY);
-      const now = Date.now();
+      try {
+        const token = localStorage.getItem(USER_TOKEN_KEY);
+        const expiration = localStorage.getItem(USER_TOKEN_EXPIRATION_KEY);
+        const now = Date.now();
 
-      if (token && expiration && parseInt(expiration) > now) {
-        setIsAuthenticated(true);
-      } else {
-        localStorage.removeItem(USER_TOKEN_KEY);
-        localStorage.removeItem(USER_TOKEN_EXPIRATION_KEY);
+        if (token && expiration && parseInt(expiration) > now) {
+          setIsAuthenticated(true);
+        } else {
+          localStorage.removeItem(USER_TOKEN_KEY);
+          localStorage.removeItem(USER_TOKEN_EXPIRATION_KEY);
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error);
         setIsAuthenticated(false);
       }
     };
@@ -46,24 +51,24 @@ export const useUserAuth = (): AuthHookReturn => {
         body: JSON.stringify({ email, password }),
       });
   
+      const data = await response.json();
+  
       if (response.ok) {
-        const data = await response.json(); 
         toast({
           title: "Success",
           description: "Login successful",
           variant: "default",
         });
-        setIsAuthenticated(true); 
+        setIsAuthenticated(true);
         const expirationTime = Date.now() + TOKEN_EXPIRATION_TIME;
         localStorage.setItem(USER_TOKEN_KEY, data.token);
         localStorage.setItem(USER_TOKEN_EXPIRATION_KEY, expirationTime.toString());
-        router.push('/');
-        return data.token; 
+        router.push('/restaurants');
+        return data.token;
       } else {
-        const error = await response.json();
         toast({
           title: "Error",
-          description: error.error || 'Login failed',
+          description: data.error || 'Login failed',
           variant: "destructive",
         });
       }
@@ -78,7 +83,7 @@ export const useUserAuth = (): AuthHookReturn => {
       setLoading(false);
     }
   
-    return null; 
+    return null;
   };
   
   const register = async (name: string, email: string, password: string) => {
@@ -90,6 +95,8 @@ export const useUserAuth = (): AuthHookReturn => {
         body: JSON.stringify({ name, email, password }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
         toast({
           title: "Success",
@@ -98,10 +105,9 @@ export const useUserAuth = (): AuthHookReturn => {
         });
         router.push('/user/login');
       } else {
-        const error = await response.json();
         toast({
           title: "Error",
-          description: error.error || 'Registration failed',
+          description: data.error || 'Registration failed',
           variant: "destructive",
         });
       }

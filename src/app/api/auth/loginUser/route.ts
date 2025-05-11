@@ -1,49 +1,43 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { comparePassword } from "@/lib/auth";
-import jwt from "jsonwebtoken";
+import { PrismaClient } from "@prisma/client";
+import { comparePassword, generateToken } from "@/lib/auth";
+
+const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
 
+    // Validate required fields
+    if (!email || !password) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    // Find user
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email }
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
-    if (user.role !== "User") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
-
+    // Verify password
     const isPasswordValid = await comparePassword(password, user.password);
 
     if (!isPasswordValid) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET || "your-secret-key",
-      { expiresIn: "1d" }
-    );
+    // Generate token
+    const token = generateToken({ id: user.id, email: user.email, role: user.role });
 
-    return NextResponse.json({ token }, { status: 200 });
+    return NextResponse.json({
+      message: "Login successful",
+      token
+    });
   } catch (error) {
     console.error("Error during login:", error);
-
-    return NextResponse.json(
-      { error: "An unknown error occurred" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAdminAuth } from '../../../hooks/useAdminAuth';
@@ -11,8 +11,13 @@ const LoginPage = () => {
   const { login, loading, isAuthenticated } = useAdminAuth();
   const router = useRouter();
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/admin-dashboard');
+    }
+  }, [isAuthenticated, router]);
+
   if (isAuthenticated) {
-    router.push('/admin-dashboard');
     return null;
   }
 

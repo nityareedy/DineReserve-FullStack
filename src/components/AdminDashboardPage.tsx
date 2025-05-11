@@ -14,6 +14,28 @@ import {
 import { UploadButton } from "@/utils/uploadthing";
 import ShimmerEffect from './ShimmerEffect';
 import { ToastAction } from './ui/toast';
+import { Users, Utensils, CalendarCheck } from 'lucide-react';
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 interface Restaurant {
   id: number;
@@ -49,6 +71,23 @@ export default function AdminDashboard() {
   const [newRatings, setNewRatings] = useState<number | string>('');
   const [newImageUrl, setNewImageUrl] = useState('');
   const { toast } = useToast()
+  const [analytics, setAnalytics] = useState<{ userCount: number; restaurantCount: number; bookingCount: number }>({ userCount: 0, restaurantCount: 0, bookingCount: 0 });
+
+  // --- User Analytics Panel ---
+  const [userAnalytics, setUserAnalytics] = useState<any>(null);
+  useEffect(() => {
+    fetch('/api/admin/analytics')
+      .then(res => res.json())
+      .then(setUserAnalytics);
+  }, []);
+
+  // --- Trends State ---
+  const [trends, setTrends] = useState<any>(null);
+  useEffect(() => {
+    fetch('/api/admin/trends')
+      .then(res => res.json())
+      .then(setTrends);
+  }, []);
 
   const fetchRestaurants = async () => {
     setLoading(true);
@@ -65,6 +104,10 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchRestaurants();
+    // Fetch analytics
+    fetch('/api/admin/analytics')
+      .then(res => res.json())
+      .then(data => setAnalytics(data));
   }, []);
 
   const handleDelete = async (id: number) => {
@@ -236,6 +279,123 @@ export default function AdminDashboard() {
 
   return (
     <main className="p-4">
+      {/* User Analytics Panel */}
+      {userAnalytics && (
+        <div className="mb-8 p-6 bg-white rounded-lg shadow flex flex-col md:flex-row gap-8">
+          <div className="flex-1">
+            <h2 className="text-xl font-bold mb-2 flex items-center gap-2"><Users className="w-5 h-5" /> Total Users</h2>
+            <p className="text-3xl font-semibold">{userAnalytics.totalUsers}</p>
+          </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-bold mb-2 flex items-center gap-2"><CalendarCheck className="w-5 h-5" /> New Users (Last 7 Days)</h2>
+            <p className="text-3xl font-semibold">{userAnalytics.newUsersLast7Days}</p>
+          </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-bold mb-2 flex items-center gap-2"><Users className="w-5 h-5" /> Recent Registrations</h2>
+            <ul className="max-h-40 overflow-y-auto">
+              {Array.isArray(userAnalytics.recentUsers) && userAnalytics.recentUsers.length > 0 ? (
+                userAnalytics.recentUsers.map((user: any) => (
+                  <li key={user.id} className="py-1 border-b last:border-b-0">
+                    <span className="font-medium">{user.name}</span> (<span className="text-xs">{user.email}</span>)<br />
+                    <span className="text-xs text-gray-500">{new Date(user.createdAt).toLocaleString()}</span>
+                  </li>
+                ))
+              ) : (
+                <li className="text-gray-500">No recent registrations.</li>
+              )}
+            </ul>
+          </div>
+        </div>
+      )}
+      {/* Trend Graphs */}
+      {trends && (
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-lg shadow p-4">
+            <h3 className="font-semibold mb-2">User Registrations (Last 30 Days)</h3>
+            <Line
+              data={{
+                labels: trends.dates,
+                datasets: [
+                  {
+                    label: 'Users',
+                    data: trends.userCounts,
+                    borderColor: 'rgba(59,130,246,1)',
+                    backgroundColor: 'rgba(59,130,246,0.2)',
+                    fill: true,
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { x: { ticks: { maxTicksLimit: 7 } } },
+              }}
+            />
+          </div>
+          <div className="bg-white rounded-lg shadow p-4">
+            <h3 className="font-semibold mb-2">Restaurants Added (Last 30 Days)</h3>
+            <Line
+              data={{
+                labels: trends.dates,
+                datasets: [
+                  {
+                    label: 'Restaurants',
+                    data: trends.restaurantCounts,
+                    borderColor: 'rgba(16,185,129,1)',
+                    backgroundColor: 'rgba(16,185,129,0.2)',
+                    fill: true,
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { x: { ticks: { maxTicksLimit: 7 } } },
+              }}
+            />
+          </div>
+          <div className="bg-white rounded-lg shadow p-4">
+            <h3 className="font-semibold mb-2">Bookings (Last 30 Days)</h3>
+            <Line
+              data={{
+                labels: trends.dates,
+                datasets: [
+                  {
+                    label: 'Bookings',
+                    data: trends.bookingCounts,
+                    borderColor: 'rgba(234,88,12,1)',
+                    backgroundColor: 'rgba(234,88,12,0.2)',
+                    fill: true,
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { x: { ticks: { maxTicksLimit: 7 } } },
+              }}
+            />
+          </div>
+        </div>
+      )}
+      {/* Analytics Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="rounded-2xl bg-white/80 backdrop-blur-md border border-white/30 shadow-lg p-6 flex flex-col items-center text-center animate-fade-in">
+          <Users className="text-primary mb-2" size={32} />
+          <div className="text-3xl font-bold">{analytics.userCount}</div>
+          <div className="text-gray-700 font-medium mt-1">Users</div>
+        </div>
+        <div className="rounded-2xl bg-white/80 backdrop-blur-md border border-white/30 shadow-lg p-6 flex flex-col items-center text-center animate-fade-in">
+          <Utensils className="text-primary mb-2" size={32} />
+          <div className="text-3xl font-bold">{analytics.restaurantCount}</div>
+          <div className="text-gray-700 font-medium mt-1">Restaurants</div>
+        </div>
+        <div className="rounded-2xl bg-white/80 backdrop-blur-md border border-white/30 shadow-lg p-6 flex flex-col items-center text-center animate-fade-in">
+          <CalendarCheck className="text-primary mb-2" size={32} />
+          <div className="text-3xl font-bold">{analytics.bookingCount}</div>
+          <div className="text-gray-700 font-medium mt-1">Bookings</div>
+        </div>
+      </div>
       <div className="w-full flex justify-between items-center m-4 pr-5">
         <h2 className="text-2xl font-bold">Admin Dashboard</h2>
         <div className="flex gap-2 pr-4">

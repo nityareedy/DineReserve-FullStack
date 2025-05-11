@@ -9,6 +9,7 @@ import { useUserAuth } from "@/hooks/useUserAuth";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 import { Star, X } from 'lucide-react';
+import BookingForm from "@/components/BookingForm";
 
 interface Owner {
   id: number;
@@ -233,6 +234,11 @@ const RestaurantDetailPage = () => {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Booking Section */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-8 animate-fade-in">
+          <BookingForm restaurantId={restaurant.id} restaurantName={restaurant.name} />
         </div>
 
         {/* Reviews Section */}

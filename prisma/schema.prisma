@@ -21,6 +21,7 @@ model User {
   role     String  // 'User', 'BusinessOwner', 'Admin'
   restaurants Restaurant[]
   reviews     Review[]
+  createdAt DateTime @default(now())
 }
 
 model Restaurant {
@@ -37,6 +38,7 @@ model Restaurant {
   createdAt   DateTime @default(now())
   reviews     Review[]
   imageUrl    String
+  bookings    Booking[]
 }
 
 model Review {
@@ -48,4 +50,19 @@ model Review {
   user        User     @relation(fields: [userId], references: [id])
   restaurant  Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade) 
   createdAt   DateTime @default(now())
+}
+
+model Booking {
+  id            Int        @id @default(autoincrement())
+  customerName  String
+  customerEmail String
+  customerPhone String?
+  restaurantId  Int
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  date          DateTime
+  time          String
+  numberOfPeople Int
+  status        String     @default("pending") // pending, confirmed, cancelled
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 }
