@@ -193,7 +193,7 @@ export default function RestaurantCardUser({ restaurants, onDeleteClick, onEditC
       {/* Modal for restaurant details */}
       {modalRestaurant && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg relative">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg relative max-h-[90vh] overflow-y-auto">
             <button
               className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl"
               onClick={() => { setModalRestaurant(null); setShowBooking(false); }}

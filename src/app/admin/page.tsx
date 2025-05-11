@@ -11,8 +11,7 @@ const AdminPage = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const token = localStorage.getItem('token'); 
-
+        let token = localStorage.getItem('admin-token') || localStorage.getItem('user-token');
         if (token) {
           const response = await fetch('/api/status', {
             method: 'GET',

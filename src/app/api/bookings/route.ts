@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { verifyToken } from '@/lib/auth';
+import { JwtPayload } from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
 
@@ -44,8 +45,9 @@ export async function POST(request: Request) {
 
     // Verify the token
     const token = authHeader.split(' ')[1];
+    let payload: JwtPayload;
     try {
-      verifyToken(token);
+      payload = verifyToken(token) as JwtPayload;
     } catch (error) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
@@ -72,9 +74,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'This time slot is already booked' }, { status: 400 });
     }
 
-    // Create the booking
+    // Create the booking with userId
     const booking = await prisma.booking.create({
       data: {
+        userId: payload.id ? Number(payload.id) : undefined,
         restaurantId: parseInt(restaurantId),
         date: new Date(date),
         time,

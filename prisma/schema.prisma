@@ -21,6 +21,7 @@ model User {
   role     String  // 'User', 'BusinessOwner', 'Admin'
   restaurants Restaurant[]
   reviews     Review[]
+  bookings    Booking[]   // Relation to bookings
   createdAt DateTime @default(now())
 }
 
@@ -54,6 +55,8 @@ model Review {
 
 model Booking {
   id            Int        @id @default(autoincrement())
+  userId        Int?       // User who made the booking
+  user          User?      @relation(fields: [userId], references: [id])
   customerName  String
   customerEmail String
   customerPhone String?

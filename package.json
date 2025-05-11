@@ -38,6 +38,7 @@
     "uploadthing": "^7.3.0"
   },
   "devDependencies": {
+    "@netlify/plugin-nextjs": "^5.11.1",
     "@types/google.maps": "^3.58.1",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/jwt-decode": "^2.2.1",

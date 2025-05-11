@@ -11,14 +11,13 @@ const BusinessOwnerPage = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const token = localStorage.getItem('token'); // Retrieve token from localStorage
-
+        let token = localStorage.getItem('business-token') || localStorage.getItem('user-token');
         if (token) {
           const response = await fetch('/api/status', {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`, // Include token in Authorization header
+              'Authorization': `Bearer ${token}`,
             },
           });
 
@@ -26,19 +25,19 @@ const BusinessOwnerPage = () => {
 
           if (data.authenticated) {
             setIsAuthenticated(true);
-            router.push('/business-dashboard'); // Redirect to DashboardPage after login
+            router.push('/business-dashboard');
           } else {
             setIsAuthenticated(false);
-            router.push('/business-owner/login'); // Redirect to login if not authenticated
+            router.push('/business-owner/login');
           }
         } else {
           setIsAuthenticated(false);
-          router.push('/business-owner/login'); // Redirect to login if no token
+          router.push('/business-owner/login');
         }
       } catch (error) {
         console.error('Error checking authentication status:', error);
         setIsAuthenticated(false);
-        router.push('/business-owner/login'); // Redirect to login on error
+        router.push('/business-owner/login');
       }
     };
 

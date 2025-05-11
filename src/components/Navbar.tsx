@@ -8,6 +8,7 @@ export default function Navbar() {
         <nav className="flex space-x-4 items-center">
           <Link href="/restaurants">Restaurants</Link>
           <Link href="/search">Search-by-zipcode</Link>
+          <Link href="/my-bookings">My Bookings</Link>
           <Link href="/business-owner">Business-Owner</Link>
           <Link href="/admin">Admin-Dashboard</Link>
         </nav>  

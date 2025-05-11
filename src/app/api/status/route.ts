@@ -1,25 +1,30 @@
 import { NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
+import { verifyToken } from '@/lib/auth';
+import { JwtPayload } from 'jsonwebtoken';
 
 export async function GET(request: Request) {
   try {
-    const cookieHeader = request.headers.get('cookie');
-    const token = cookieHeader?.split('=')[1]; 
-
+    let token = request.headers.get('authorization');
     if (!token) {
-      return NextResponse.json({ authenticated: false }, { status: 401 });
+      // Try to get from cookies (if SSR)
+      const cookies = request.headers.get('cookie');
+      if (cookies) {
+        const match = cookies.match(/(user-token|admin-token)=([^;]+)/);
+        if (match) token = `Bearer ${match[2]}`;
+      }
     }
-
-    // Verify the token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    const decodedPayload = decoded as jwt.JwtPayload;
-
-    // Return success response
-    return NextResponse.json({ authenticated: true, userId: decodedPayload.id }, { status: 200 });
+    if (!token || !token.startsWith('Bearer ')) {
+      return NextResponse.json({ authenticated: false, role: null }, { status: 401 });
+    }
+    token = token.replace('Bearer ', '');
+    let payload: JwtPayload;
+    try {
+      payload = verifyToken(token) as JwtPayload;
+    } catch {
+      return NextResponse.json({ authenticated: false, role: null }, { status: 401 });
+    }
+    return NextResponse.json({ authenticated: true, role: payload.role || null });
   } catch (error) {
-    console.error('Invalid token:', error);
-
-    // Handle invalid token
-    return NextResponse.json({ authenticated: false }, { status: 401 });
+    return NextResponse.json({ authenticated: false, role: null }, { status: 500 });
   }
 }
