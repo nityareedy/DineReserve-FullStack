@@ -34,6 +34,7 @@ interface Restaurant {
   cuisine: string;
   priceRange: string;
   ratings: number;
+  meanRating?: string;
   imageUrl: string;
   owner: Owner;
   reviews: Review[];
@@ -45,6 +46,7 @@ const RestaurantDetailPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reviewContent, setReviewContent] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
+  const [meanRating, setMeanRating] = useState<string | null>(null);
   const { toast } = useToast();
   const { isAuthenticated } = useUserAuth();
   const params = useParams();
@@ -61,8 +63,8 @@ const RestaurantDetailPage = () => {
   };
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!restaurant) return;
-
     if (!isAuthenticated) {
       toast({
         variant: "destructive",
@@ -76,7 +78,6 @@ const RestaurantDetailPage = () => {
       });
       return;
     }
-
     let userId;
     try {
       const token = localStorage.getItem('user-token');
@@ -87,7 +88,6 @@ const RestaurantDetailPage = () => {
     } catch (e) {
       console.error("Failed to decode JWT", e);
     }
-
     if (!userId) {
       toast({
         variant: "destructive",
@@ -96,9 +96,8 @@ const RestaurantDetailPage = () => {
       });
       return;
     }
-
     try {
-      const response = await fetch("/api/reviews", {
+      const response = await fetch(`/api/restaurants/${restaurant.id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -107,20 +106,15 @@ const RestaurantDetailPage = () => {
           content: reviewContent,
           rating: reviewRating,
           userId,
-          restaurantId: restaurant.id,
         }),
       });
-
-      console.log(response);
-
       if (!response.ok) {
         throw new Error("Failed to submit review");
       }
-
-      const newReview = await response.json();
-      setRestaurant(
-        (prev) => prev && { ...prev, reviews: [...prev.reviews, newReview] }
-      );
+      // Refetch restaurant details to update reviews and mean rating
+      const updated = await fetch(`/api/restaurants/${restaurant.id}`).then(res => res.json());
+      setRestaurant(updated);
+      setMeanRating(updated.meanRating);
       setReviewContent("");
       setReviewRating(5);
       setIsModalOpen(false);
@@ -142,7 +136,6 @@ const RestaurantDetailPage = () => {
     const fetchRestaurantDetails = async () => {
       try {
         const id = params.id;
-
         if (!id) {
           toast({
             variant: "destructive",
@@ -152,15 +145,13 @@ const RestaurantDetailPage = () => {
           });
           return;
         }
-
         const response = await fetch(`/api/restaurants/${id}`);
-
         if (!response.ok) {
           throw new Error("Failed to fetch restaurant details");
         }
-
         const data = await response.json();
         setRestaurant(data);
+        setMeanRating(data.meanRating);
       } catch (error) {
         console.error("Error fetching restaurant details:", error);
         toast({
@@ -173,7 +164,6 @@ const RestaurantDetailPage = () => {
         setLoading(false);
       }
     };
-
     fetchRestaurantDetails();
   }, [params.id]);
 
@@ -249,6 +239,10 @@ const RestaurantDetailPage = () => {
               <Button onClick={() => setIsModalOpen(true)}>Leave a Review</Button>
               <Button variant="destructive" onClick={handlelogout}>Logout</Button>
             </div>
+          </div>
+          <div className="mb-4">
+            <span className="text-lg font-semibold">Average Rating: </span>
+            <span className="text-yellow-600 font-bold">{meanRating ? `${meanRating} ★` : 'No ratings yet'}</span>
           </div>
           {isModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in">
