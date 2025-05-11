@@ -8,6 +8,7 @@ import { ToastAction } from "@/components/ui/toast";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
+import { Star, X } from 'lucide-react';
 
 interface Owner {
   id: number;
@@ -188,110 +189,121 @@ const RestaurantDetailPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid md:grid-cols-2 gap-8">
-        <div className="relative aspect-video">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 p-4">
+      <div className="max-w-5xl mx-auto">
+        {/* Hero Image */}
+        <div className="relative aspect-video rounded-3xl overflow-hidden shadow-lg mb-8">
           <img
             src={restaurant.imageUrl}
             alt={restaurant.name}
-            className="object-cover rounded-lg"
+            className="object-cover w-full h-full"
           />
-        </div>
-
-        <div>
-          <h1 className="text-3xl font-bold mb-4">{restaurant.name}</h1>
-          <p className="text-gray-600 mb-4">{restaurant.description}</p>
-
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <strong>Address:</strong> {restaurant.address}
-              <br />
-              <strong>Zipcode:</strong> {restaurant.zipcode}
-            </div>
-            <div>
-              <strong>Cuisine:</strong> {restaurant.cuisine}
-              <br />
-              <strong>Price Range:</strong> {restaurant.priceRange}
-              <br />
-              <strong>Ratings:</strong> {restaurant.ratings} ★
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
+            <h1 className="text-4xl font-extrabold text-white drop-shadow mb-2">{restaurant.name}</h1>
+            <div className="flex gap-2 flex-wrap">
+              <span className="bg-primary text-white text-xs font-semibold px-3 py-1 rounded-full shadow">{restaurant.cuisine}</span>
+              <span className="bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full shadow">{restaurant.priceRange}</span>
+              <span className="bg-yellow-100 text-yellow-700 text-xs font-semibold px-3 py-1 rounded-full shadow flex items-center gap-1">
+                <Star size={14} className="inline text-yellow-500" /> {restaurant.ratings} ★
+              </span>
             </div>
           </div>
+        </div>
 
-          {restaurant.owner && (
-            <div className="bg-gray-100 p-4 rounded-lg mb-4">
-              <h3 className="text-xl font-semibold mb-2">Restaurant Owner</h3>
-              <p>{restaurant.owner.name}</p>
-              <p>{restaurant.owner.email}</p>
+        {/* Restaurant Info Card */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-8 animate-fade-in">
+          <div className="grid md:grid-cols-2 gap-8">
+            <div>
+              <h2 className="text-xl font-bold mb-2">About</h2>
+              <p className="text-gray-600 mb-4">{restaurant.description}</p>
+              <div className="mb-2"><strong>Address:</strong> {restaurant.address}</div>
+              <div className="mb-2"><strong>Zipcode:</strong> {restaurant.zipcode}</div>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold mb-2">Details</h2>
+              <div className="mb-2"><strong>Cuisine:</strong> {restaurant.cuisine}</div>
+              <div className="mb-2"><strong>Price Range:</strong> {restaurant.priceRange}</div>
+              <div className="mb-2"><strong>Ratings:</strong> {restaurant.ratings} ★</div>
+              {restaurant.owner && (
+                <div className="bg-gray-100 p-4 rounded-lg mt-4">
+                  <h3 className="text-lg font-semibold mb-1">Restaurant Owner</h3>
+                  <p>{restaurant.owner.name}</p>
+                  <p className="text-xs text-gray-500">{restaurant.owner.email}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 animate-fade-in">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Reviews</h2>
+            <div className="flex gap-2">
+              <Button onClick={() => setIsModalOpen(true)}>Leave a Review</Button>
+              <Button variant="destructive" onClick={handlelogout}>Logout</Button>
+            </div>
+          </div>
+          {isModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md relative animate-fade-in">
+                <button className="absolute top-3 right-3 text-gray-400 hover:text-gray-600" onClick={() => setIsModalOpen(false)}>
+                  <X size={20} />
+                </button>
+                <h2 className="text-lg font-semibold mb-4">Write a Review</h2>
+                <input
+                  type="text"
+                  value={reviewContent}
+                  onChange={(e) => setReviewContent(e.target.value)}
+                  placeholder="Write your review here"
+                  className="mb-4 border rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="text-sm font-medium">Rating:</span>
+                  {[1,2,3,4,5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      className={`text-yellow-400 ${reviewRating >= star ? '' : 'opacity-30'}`}
+                      onClick={() => setReviewRating(star)}
+                    >
+                      <Star size={24} />
+                    </button>
+                  ))}
+                  <span className="ml-2 text-gray-500">{reviewRating}/5</span>
+                </div>
+                <div className="flex justify-end gap-2 mt-4">
+                  <Button onClick={handleReviewSubmit}>Submit Review</Button>
+                  <Button onClick={() => setIsModalOpen(false)} variant="destructive">Cancel</Button>
+                </div>
+              </div>
+            </div>
+          )}
+          {restaurant.reviews.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 animate-fade-in">
+              <img src="https://illustrations.popsy.co/gray/empty-state.svg" alt="No reviews" className="w-32 mb-4 opacity-80" />
+              <p className="text-gray-500">No reviews yet</p>
+            </div>
+          ) : (
+            <div className="space-y-4 overflow-y-auto" style={{ maxHeight: "calc(3 * 8rem + 2rem)" }}>
+              {restaurant.reviews.map((review, idx) => (
+                <div
+                  key={review.id}
+                  className="bg-gray-50 border rounded-lg p-4 shadow-sm animate-fade-in"
+                  style={{ animationDelay: `${idx * 60}ms` }}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    {[...Array(review.rating)].map((_, i) => (
+                      <Star key={i} size={18} className="text-yellow-400" />
+                    ))}
+                    <span className="text-xs text-gray-500 ml-2">{new Date(review.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <p className="text-gray-700">{review.content}</p>
+                </div>
+              ))}
             </div>
           )}
         </div>
-      </div>
-
-      <div className="mt-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold mb-4">Reviews</h2>
-          <div className="flex gap-2">
-            <Button onClick={() => setIsModalOpen(true)}>Leave a Review</Button>
-            <Button variant="destructive" onClick={handlelogout}>Logout</Button>
-          </div>
-        </div>
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-            <div className="bg-white p-6 rounded shadow-lg w-96">
-              <h2 className="text-lg font-semibold mb-4">Review Content</h2>
-              <input
-                type="text"
-                value={reviewContent}
-                onChange={(e) => setReviewContent(e.target.value)}
-                placeholder="Write your review here"
-                className="mb-2 border rounded px-2 py-1 w-full"
-              />
-              <input
-                id="rating"
-                type="number"
-                min="1"
-                max="5"
-                value={reviewRating}
-                onChange={(e) => setReviewRating(Number(e.target.value))}
-                className="w-full p-2 border rounded mb-2"
-              />
-              <div className="flex justify-end space-x-2">
-                <Button onClick={handleReviewSubmit}>Submit Review</Button>
-                <Button
-                  onClick={() => setIsModalOpen(false)}
-                  variant="destructive"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-        {restaurant.reviews.length === 0 ? (
-          <p className="text-gray-500">No reviews yet</p>
-        ) : (
-          <div
-            className="space-y-4 overflow-y-auto"
-            style={{ maxHeight: "calc(3 * 8rem + 2rem)" }}
-          >
-            {restaurant.reviews.map((review) => (
-              <div
-                key={review.id}
-                className="bg-white border rounded-lg p-4 shadow-sm"
-              >
-                <p>{review.content}</p>
-                <div className="text-yellow-500">
-                  <div className="flex justify-between items-center mb-2">
-                    <span>{"★".repeat(review.rating)}</span>
-                    <span className="text-sm text-gray-500">
-                      {new Date(review.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
