@@ -1,6 +1,7 @@
 import { Button } from "./ui/button";
 import { useRouter } from 'next/navigation';
 import { useState, useMemo } from "react";
+import BookingForm from './BookingForm';
 import {
   Select,
   SelectContent,
@@ -27,13 +28,16 @@ type RestaurantGridProps = {
   onDeleteClick?: (id: number) => void;
   isAdmin?: boolean; 
   isBusinessOwner?: boolean;
+  onShowOnMap?: (restaurant: Restaurant) => void;
 };
 
-export default function RestaurantCardUser({ restaurants, onDeleteClick, onEditClick, isAdmin, isBusinessOwner }: RestaurantGridProps) {
+export default function RestaurantCardUser({ restaurants, onDeleteClick, onEditClick, isAdmin, isBusinessOwner, onShowOnMap }: RestaurantGridProps) {
   const router = useRouter();
   const [selectedCuisine, setSelectedCuisine] = useState<string>("all");
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>("all");
   const [selectedRating, setSelectedRating] = useState<string>("all");
+  const [modalRestaurant, setModalRestaurant] = useState<Restaurant | null>(null);
+  const [showBooking, setShowBooking] = useState(false);
 
   // Get unique cuisines from restaurants
   const cuisines = useMemo(() => {
@@ -125,7 +129,7 @@ export default function RestaurantCardUser({ restaurants, onDeleteClick, onEditC
           <div
             key={restaurant.id}
             className="border rounded p-4 shadow hover:shadow-lg cursor-pointer"
-            onClick={() => router.push(`/restaurants/${restaurant.id}`)}
+            onClick={() => setModalRestaurant(restaurant)}
           >
             <img
               src={restaurant.imageUrl}
@@ -185,6 +189,46 @@ export default function RestaurantCardUser({ restaurants, onDeleteClick, onEditC
           </div>
         ))}
       </div>
+
+      {/* Modal for restaurant details */}
+      {modalRestaurant && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg relative">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl"
+              onClick={() => { setModalRestaurant(null); setShowBooking(false); }}
+            >
+              &times;
+            </button>
+            <img
+              src={modalRestaurant.imageUrl}
+              alt={`${modalRestaurant.name} image`}
+              className="mb-4 rounded object-cover w-full h-56"
+            />
+            <h2 className="text-2xl font-bold mb-2">{modalRestaurant.name}</h2>
+            <p className="mb-2">{modalRestaurant.description}</p>
+            <p className="mb-1"><strong>Address:</strong> {modalRestaurant.address}</p>
+            <p className="mb-1"><strong>Cuisine:</strong> {modalRestaurant.cuisine}</p>
+            <p className="mb-1"><strong>Price Range:</strong> {modalRestaurant.priceRange}</p>
+            <p className="mb-1"><strong>Ratings:</strong> {modalRestaurant.ratings} ★</p>
+            <div className="flex gap-4 mt-4">
+              <Button onClick={() => setShowBooking(true)}>
+                Book Now
+              </Button>
+              {onShowOnMap && (
+                <Button variant="outline" onClick={() => { onShowOnMap(modalRestaurant); setModalRestaurant(null); }}>
+                  Show on Map
+                </Button>
+              )}
+            </div>
+            {showBooking && (
+              <div className="mt-6">
+                <BookingForm restaurantId={modalRestaurant.id} restaurantName={modalRestaurant.name} />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
