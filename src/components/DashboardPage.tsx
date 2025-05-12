@@ -172,7 +172,7 @@ const DashboardPage = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('business-token')}`,
         },
         body: JSON.stringify({
           name: newName || editRestaurant.name,
@@ -225,7 +225,7 @@ const DashboardPage = () => {
       const response = await fetch(`/api/restaurants/${id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('business-token')}`,
         },
       });
 
@@ -254,8 +254,13 @@ const DashboardPage = () => {
   };
 
   const handleLogout = () => {
+    // Clear all tokens
     localStorage.removeItem('business-token');
     localStorage.removeItem('business-token-expiration');
+    localStorage.removeItem('user-token');
+    localStorage.removeItem('user-token-expiration');
+    localStorage.removeItem('admin-token');
+    localStorage.removeItem('admin-token-expiration');
     toast({
       description: "Logged out successfully.",
     });

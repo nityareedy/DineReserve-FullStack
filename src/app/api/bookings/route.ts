@@ -97,4 +97,50 @@ export async function POST(request: Request) {
     console.error('Error creating booking:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
+}
+
+// PATCH /api/bookings - Update or cancel a booking by ID
+export async function PATCH(request: Request) {
+  try {
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const token = authHeader.split(' ')[1];
+    let payload: JwtPayload;
+    try {
+      payload = verifyToken(token) as JwtPayload;
+    } catch (error) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { id, status, date, time, numberOfPeople } = body;
+    if (!id) {
+      return NextResponse.json({ error: 'Booking ID is required' }, { status: 400 });
+    }
+
+    // Only allow the user who made the booking or an admin to update
+    const booking = await prisma.booking.findUnique({ where: { id: Number(id) } });
+    if (!booking) {
+      return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
+    }
+    if (payload.role !== 'Admin' && booking.userId !== Number(payload.id)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const updatedBooking = await prisma.booking.update({
+      where: { id: Number(id) },
+      data: {
+        status: status || booking.status,
+        date: date ? new Date(date) : booking.date,
+        time: time || booking.time,
+        numberOfPeople: numberOfPeople || booking.numberOfPeople,
+      },
+    });
+    return NextResponse.json(updatedBooking);
+  } catch (error) {
+    console.error('Error updating booking:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 } 

@@ -46,8 +46,9 @@ export const useBusinessAuth = (): AuthHookReturn => {
         body: JSON.stringify({ email, password }),
       });
   
+      const data = await response.json();
+  
       if (response.ok) {
-        const data = await response.json(); 
         toast({
           title: "Success",
           description: "Login successful",
@@ -57,13 +58,12 @@ export const useBusinessAuth = (): AuthHookReturn => {
         const expirationTime = Date.now() + TOKEN_EXPIRATION_TIME;
         localStorage.setItem(TOKEN_KEY, data.token);
         localStorage.setItem(TOKEN_EXPIRATION_KEY, expirationTime.toString());
-        router.push('/business-owner');
+        router.push('/business-dashboard');
         return data.token; 
       } else {
-        const error = await response.json();
         toast({
           title: "Error",
-          description: error.error || 'Login failed',
+          description: data.error || 'Login failed',
           variant: "destructive",
         });
       }

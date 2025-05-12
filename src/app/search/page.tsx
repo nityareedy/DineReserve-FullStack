@@ -43,6 +43,7 @@ export default function RestaurantFinder() {
   const [error, setError] = useState<Error | null>(null);
   const [zipCode, setZipCode] = useState('');
   const [map, setMap] = useState<JSX.Element | null>(null);
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
   const renderPriceLevel = (level?: number) => {
     if (!level) return 'N/A';
@@ -188,8 +189,39 @@ export default function RestaurantFinder() {
                       {restaurant.opening_hours.open_now ? 'Open Now' : 'Closed'}
                     </span>
                   )}
+                  <button
+                    className="text-blue-600 underline mt-2 text-sm"
+                    onClick={() => setExpandedIdx(expandedIdx === idx ? null : idx)}
+                  >
+                    {expandedIdx === idx ? 'Hide Details' : 'View Details'}
+                  </button>
                 </div>
               </CardHeader>
+              {expandedIdx === idx && (
+                <div className="px-6 pb-4 animate-fade-in">
+                  {restaurant.photos && restaurant.photos.length > 0 && (
+                    <img
+                      src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=600&photoreference=${restaurant.photos[0].photo_reference}&key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}`}
+                      alt={restaurant.name}
+                      className="w-full h-56 object-cover rounded-xl border mb-2"
+                    />
+                  )}
+                  <div className="text-gray-800 mb-2">
+                    {/* Google Places API may not provide a description, but you can show address, rating, etc. */}
+                    <strong>Address:</strong> {restaurant.formatted_address}
+                  </div>
+                  {restaurant.rating && (
+                    <div className="mb-1"><strong>Rating:</strong> {restaurant.rating} ({restaurant.user_ratings_total} reviews)</div>
+                  )}
+                  {restaurant.price_level && (
+                    <div className="mb-1"><strong>Price Level:</strong> {renderPriceLevel(restaurant.price_level)}</div>
+                  )}
+                  {restaurant.opening_hours && (
+                    <div className="mb-1"><strong>Status:</strong> {restaurant.opening_hours.open_now ? 'Open Now' : 'Closed'}</div>
+                  )}
+                  {/* Add more details as needed */}
+                </div>
+              )}
               <CardContent className="flex justify-end pt-4">
                 <Button
                   variant="outline"

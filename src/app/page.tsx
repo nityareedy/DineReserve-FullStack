@@ -29,6 +29,18 @@ export default function Home() {
 
   const router = useRouter();
 
+  const handleNameSearch = () => {
+    if (searchQuery.trim()) {
+      router.push(`/restaurants?query=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const handleZipSearch = () => {
+    if (zipCode.trim()) {
+      router.push(`/search?zip=${encodeURIComponent(zipCode)}`);
+    }
+  };
+
   return (
     <div className="relative min-h-screen flex flex-col justify-center items-center overflow-x-hidden">
       {/* Background image with dark overlay */}
@@ -45,16 +57,20 @@ export default function Home() {
             type="text"
             placeholder="Search for restaurants or cuisines"
             className="flex-1 px-5 py-3 rounded-full bg-white/70 text-gray-800 placeholder-gray-400 shadow focus:outline-none focus:ring-2 focus:ring-primary transition"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
           />
-          <button className="px-6 py-3 rounded-full bg-primary text-white font-semibold shadow hover:bg-primary/90 transition">Search</button>
+          <button className="px-6 py-3 rounded-full bg-primary text-white font-semibold shadow hover:bg-primary/90 transition" onClick={handleNameSearch}>Search</button>
         </div>
         <div className="w-full flex flex-col md:flex-row gap-4">
           <input
             type="text"
             placeholder="Type zipcode for restaurants or cuisines"
             className="flex-1 px-5 py-3 rounded-full bg-white/70 text-gray-800 placeholder-gray-400 shadow focus:outline-none focus:ring-2 focus:ring-primary transition"
+            value={zipCode}
+            onChange={e => setZipCode(e.target.value)}
           />
-          <button className="px-6 py-3 rounded-full bg-primary text-white font-semibold shadow hover:bg-primary/90 transition">Search</button>
+          <button className="px-6 py-3 rounded-full bg-primary text-white font-semibold shadow hover:bg-primary/90 transition" onClick={handleZipSearch}>Search</button>
         </div>
       </div>
       {/* Key Features Section */}

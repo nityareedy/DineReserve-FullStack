@@ -1,97 +1,98 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { NextRequest } from 'next/server';
-import jwt from 'jsonwebtoken';
+import { verifyToken } from '@/lib/auth';
+import { JwtPayload } from 'jsonwebtoken';
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const name = searchParams.get('name');
-  const cuisine = searchParams.get('cuisine');
-  const zipcode = searchParams.get('zipcode');
-  const priceRange = searchParams.get('priceRange');
-
   try {
     const authHeader = request.headers.get('Authorization');
+    console.log('Auth header:', authHeader); // Debug log
 
     if (!authHeader?.startsWith('Bearer ')) {
+      console.error('No Bearer token provided');
       return NextResponse.json({ error: 'No token provided' }, { status: 401 });
     }
 
     const token = authHeader.split(' ')[1];
-
-    if (!process.env.JWT_SECRET) {
-      return NextResponse.json({ error: 'JWT_SECRET is not configured' }, { status: 500 });
+    console.log('Token:', token); // Debug log
+    let payload: JwtPayload;
+    
+    try {
+      payload = verifyToken(token) as JwtPayload;
+      console.log('Token payload:', payload); // Debug log
+    } catch (error) {
+      console.error('Token verification failed:', error);
+      return NextResponse.json({ 
+        error: 'Invalid token',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }, { status: 401 });
     }
-
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET) as {
-      role: string;
-      id: string;
-    };
 
     const user = await prisma.user.findUnique({
-      where: { id: Number(decodedToken.id) },
+      where: { id: Number(payload.id) },
     });
 
-    if (user?.role === 'BusinessOwner') {
-
-      const restaurants = await prisma.restaurant.findMany({
-
-        where: {
-          ownerId: Number(decodedToken.id)
-        }
-      });
-
-      return NextResponse.json(restaurants);
-    } else {
-      try {
-        const restaurants = await prisma.restaurant.findMany({
-          where: {
-            name: name ? { contains: name, mode: 'insensitive' } : undefined,
-            cuisine: cuisine ? { contains: cuisine, mode: 'insensitive' } : undefined,
-            zipcode: zipcode || undefined,
-            priceRange: priceRange || undefined,
-          },
-        });
-
-        if (restaurants.length === 0) {
-          return NextResponse.json({ message: 'No restaurants found' }, { status: 404 });
-        }
-
-        return NextResponse.json(restaurants);
-      } catch (error) {
-        console.error('Error fetching restaurants:', error);
-        return NextResponse.json({ error: 'Error fetching restaurants' }, { status: 500 });
-      }
-
+    if (!user) {
+      console.error('User not found for ID:', payload.id);
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
+
+    if (user.role !== 'BusinessOwner') {
+      console.error('User is not a business owner:', user.role);
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    const restaurants = await prisma.restaurant.findMany({
+      where: { ownerId: Number(payload.id) }
+    });
+
+    return NextResponse.json(restaurants);
   } catch (error) {
     console.error('Error retrieving restaurants:', error);
-    return NextResponse.json({
-      error: 'Error retrieving restaurants'
-
-    })
+    return NextResponse.json({ 
+      error: 'Error retrieving restaurants',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('Authorization');
 
     if (!authHeader?.startsWith('Bearer ')) {
+      console.error('No Bearer token provided');
       return NextResponse.json({ error: 'No token provided' }, { status: 401 });
     }
 
     const token = authHeader.split(' ')[1];
-
-    if (!process.env.JWT_SECRET) {
-      return NextResponse.json({ error: 'JWT_SECRET is not configured' }, { status: 500 });
+    let payload: JwtPayload;
+    
+    try {
+      payload = verifyToken(token) as JwtPayload;
+      console.log('Token payload:', payload); // Debug log
+    } catch (error) {
+      console.error('Token verification failed:', error);
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET) as {
-      id: string;
-    };
+    const user = await prisma.user.findUnique({
+      where: { id: Number(payload.id) },
+    });
+
+    if (!user) {
+      console.error('User not found for ID:', payload.id);
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    if (user.role !== 'BusinessOwner') {
+      console.error('User is not a business owner:', user.role);
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
     const data = await request.json();
-    const { name, description, address, zipcode, cuisine, priceRange, ratings, imageUrl, ownerId } = data;
+    const { name, description, address, zipcode, cuisine, priceRange, ratings, imageUrl } = data;
 
     if (!name || !address || !zipcode || !cuisine || !priceRange) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -107,13 +108,16 @@ export async function POST(request: Request) {
         priceRange,
         ratings,
         imageUrl,
-        ownerId: Number(decodedToken.id)
+        ownerId: Number(payload.id)
       },
     });
 
     return NextResponse.json(newRestaurant, { status: 201 });
   } catch (error) {
     console.error('Error creating restaurant:', error);
-    return NextResponse.json({ error: 'Error creating restaurant' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Error creating restaurant',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
