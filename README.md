@@ -1,6 +1,7 @@
 # Restaurant Finder
-This is a full-stack Project which I did as a part of CMPE-202 Sysytems Software Engineering Msters Project - Deployed On AWS 
-   A full-stack web application for discovering, booking, and managing restaurants. Built with Next.js, Prisma, and a modern UI.
+This is a full-stack Project which I did as a part of CMPE-202 Sysytems Software Engineering Msters Project - Deployed On AWS.
+
+A full-stack web application for discovering, booking, and managing restaurants. Built with Next.js, Prisma, and a modern UI.
 
 ## Features
 
