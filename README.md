@@ -17,7 +17,7 @@ A full-stack web application for discovering, booking, and managing restaurants.
 - **Backend:** Next.js API routes, Prisma ORM
 - **Database:** PostgreSQL (or your DB)
 - **Authentication:** NextAuth.js
-- **Other:** Vercel (deployment), Jest (testing)
+- **Other:** Vercel (deployment), Jest (testing), AWS 
 
 ## Getting Started
 
@@ -62,15 +62,3 @@ prisma/               # Prisma schema and migrations
 public/               # Static assets
 ```
 
-## Team & Contributions
-
-- Dhruv Khut
-- Pratik Kamanahalli Mallikarjuna
-- Niya Reddy Yerram
-- Rahul Dhingra
-
-Contributions are welcome! Please open a pull request or issue.
-
-## License
-
-[MIT](LICENSE)
